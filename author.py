@@ -1,3 +1,6 @@
+import mysql.connector
+from connect_db import connect_db
+
 class Author:
     def __init__(self, name, author_id, biography) :
        self.name = name
@@ -13,42 +16,69 @@ class Authors:
         name = input("Enter the author's name:")
         biography = input("Enter the author's biography: \n")
 
-        author_id = str(self.next_id)
-        new_author = Author(name, author_id,biography )
-        self.authors[author_id]= new_author
+        try:
+            conn = connect_db()
+            cursor = conn.cursor()
 
-        print(f"Author '{name}' added succesfully with the Library ID: {author_id}")
-        self.next_id += 1
+            query = "INSERT INTO authors (name, biography)VALUES (%s,%s)"
+            cursor.execute(query,(name,biography))
+            conn.commit()
+            print(f"Author '{name}' added successfully. ")
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
+
+        finally:
+        # close out the connection
+            if conn.is_connected():
+                cursor.close()
+                conn.close()
+            print("MySql connection closed")
 
     def view_author_details(self):
-        author_id = input("Enter the ID of the author you want to view: \n")
+        author_id = input("Enter the ID of the author you want to view: \n") #****** ask about id or author_id
+        try:
+            conn = connect_db()
+            cursor = conn.cursor()
+            query = "SELECT name, biography FROM authors WHERE id = %s"
+            cursor.execute(query,(author_id))
+            result = cursor.fetchone()
+            if result:
+                print(f"Author Information: \nName: {result[0]}\nBiography: {result[1]}\nAuthor ID: {author_id}")
 
-        if author_id in self.authors:
-            author = self.authors[author_id]
-            print(f"Author Information: \n")
-            print(f"Name: '{author.name}'")
-            print(f"Biography: {author.biography}")
-            print(f"Author ID: '{author_id}'")
-        else:
-            print("No author found with that Author ID. ")
+            else:
+                print("No author found with that Author ID. ")
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
+
+        finally:
+        # close out the connection
+            if conn.is_connected():
+                cursor.close()
+                conn.close()
+            print("MySql connection closed")
 
     def display_all_authors(self):
-        if not self.authors:
-            print("There's currently no authors.")
-        
-        else:
-            for author_id, author in self.authors.items():
-                print(f"Name: '{author.name}'")
-                print(f"Biography: {author.biography}")
-                print(f"author ID: {author_id}\n")
+        try:
+            conn = connect_db()
+            cursor = conn.cursor()
+            query = "SELECT id, name, biography FROM authors"
+            cursor.execute(query)
+            results = cursor.fetchall()
+            if results:
+                print("All authors:")
+                for author in results:
+                    print(f"ID: {author[0]}, Name: {author[1]}, Biography: {author[2]}")
+            else:
+                print("There's currently no authors.")
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
 
-
-
-
-
-
-
-
+        finally:
+        # close out the connection
+            if conn.is_connected():
+                cursor.close()
+                conn.close()
+            print("MySql connection closed")
 
 
 def author_operations(authors):

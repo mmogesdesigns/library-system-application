@@ -1,3 +1,7 @@
+import mysql.connector
+from mysql.connector import Error
+from connect_db import connect_db 
+
 class Book:
     def __init__(self, title, author,isbn,genre,year_published) :
        self.title = title
@@ -12,23 +16,51 @@ class Library:
         self.books =[]
 
     def add_book(self):    
+    
         try:
+
+            conn = connect_db()
+            cursor = conn.cursor()
+      
             title=input(("Enter the title of the book: "))
             author=input(("Enter the auhtor of the book: "))
             isbn = input("Enter the ISBN of the book: ")
             genre=input(("Enter the genre of the book: "))
             year_published=input(("Enter the year the book was published: "))
-
+            avavilability = True
             new_book = Book(title, author, isbn, genre, year_published)
-            self.books.append(new_book)
+            query = "INSERT INTO books (title, author_id, genre_id, isbn, publication_date, availability) VALUES (%s, %s, %s, %s, %s, %s)"
 
-            print(f"n\'{new_book['title']}' has been added successfully!")
-        except Exception as e:
-                print(f"Error: {e}")
+            cursor.execute(query, new_book)
+            conn.commit()
+            print("New book was succesfully added")
+
+
+    
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
+
+        finally:
+        # close out the connection
+            if conn.is_connected():
+                cursor.close()
+                conn.close()
+            print("MySql connection closed")
+
+           
+        
     
     def borrow_book(self):
-        while True:
+        try:
+            # connecting to dc
+            conn = connect_db()
+            cursor = conn.cursor()
+            
+            
             isbn = input("Enter the ISBN of the book you want to borrow:\n")
+            user_id = int(input("Enter your user ID: "))
+            #********************* start here
+
             found_and_borrowed = False
             for book in self.books:
                 if book.isbn == isbn:
@@ -47,7 +79,16 @@ class Library:
     
             another_book = input("Would you like to borrow another book? (yes/no)" )
             if another_book != 'yes':
-                break
+               return  # Exit the function if user does not want to borrow another book
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
+        except ValueError:
+            print("Invalid input. Please enter correct data types.")
+        finally:
+            if conn.is_connected():
+                cursor.close()
+                conn.close()
+                print("MySQL connection closed")
 
     def return_book(self):
         isbn = input("Enter the ISBN of the book you are returning: \n")
