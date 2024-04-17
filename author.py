@@ -61,7 +61,7 @@ class Authors:
         try:
             conn = connect_db()
             cursor = conn.cursor()
-            query = "SELECT id, name, biography FROM authors"
+            query = "SELECT * FROM authors"
             cursor.execute(query)
             results = cursor.fetchall()
             if results:

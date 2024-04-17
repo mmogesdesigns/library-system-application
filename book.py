@@ -1,3 +1,4 @@
+from typing import Any
 import mysql.connector
 from mysql.connector import Error
 from connect_db import connect_db 
@@ -10,6 +11,8 @@ class Book:
        self.genre = genre
        self.year_published = year_published
        self.available = True
+    def get_attributes(self) :
+        return (self.title,self.author, self.isbn,self.genre, self.year_published, self.available)
 
 class Library:
     def __init__(self):
@@ -27,11 +30,11 @@ class Library:
             isbn = input("Enter the ISBN of the book: ")
             genre=input(("Enter the genre of the book: "))
             year_published=input(("Enter the year the book was published: "))
-            avavilability = True
+            
             new_book = Book(title, author, isbn, genre, year_published)
             query = "INSERT INTO books (title, author_id, genre_id, isbn, publication_date, availability) VALUES (%s, %s, %s, %s, %s, %s)"
 
-            cursor.execute(query, new_book)
+            cursor.execute(query, new_book.get_attributes())
             conn.commit()
             print("New book was succesfully added")
 
@@ -58,38 +61,39 @@ class Library:
             
             
             isbn = input("Enter the ISBN of the book you want to borrow:\n")
-            user_id = int(input("Enter your user ID: "))
+
+            query = "SELECT availability FROM books WHERE isbn = %s"
+            
+            cursor.execute(query, isbn )
+            result = cursor.fetchone()
+           
             #********************* start here
 
-            found_and_borrowed = False
-            for book in self.books:
-                if book.isbn == isbn:
-                    if book.available:
-                        book.available = False  
+            
+            if result:
+                if result == True:
+                        query = "UPDATE books SET availability = false WHERE isbn = %s"
+                        cursor.execute(query,isbn)
+                        conn.commit() 
                         print(f"You have successfully borrowed '{book.title}'.")
-                        found_and_borrowed = True
-                    else:
+                else:
                         print(f"The book '{book.title}' is currently not available for borrowing.")
-                    break 
+                
 
-            if not found_and_borrowed:
-           
+
+            else:
                 print("No book with that ISBN is available in the library.")
- 
-    
-            another_book = input("Would you like to borrow another book? (yes/no)" )
-            if another_book != 'yes':
-               return  # Exit the function if user does not want to borrow another book
         except mysql.connector.Error as e:
             print(f"Error: {e}")
-        except ValueError:
-            print("Invalid input. Please enter correct data types.")
+
         finally:
+        # close out the connection
             if conn.is_connected():
                 cursor.close()
                 conn.close()
-                print("MySQL connection closed")
-
+            print("MySql connection closed")
+ 
+         
     def return_book(self):
         isbn = input("Enter the ISBN of the book you are returning: \n")
         book_found = False
@@ -111,9 +115,20 @@ class Library:
             
 
     def search_book(self):
+        isbn = input("Enter the ISBN of the book you want to search:\n")
+        try:
+            conn = connect_db()
+            cursor = conn.cursor()
+            query ="SELECT title, author, genre, year_published, availability FROM books WHERE isbn =%s"
+            cursor.execute(query)
+
+    
+
+        
+        
         while True:
             book_found = False
-            isbn = input("Enter the ISBN of the book you want to search:\n")
+            
 
             for book in self.books:
                 if book.isbn == isbn:

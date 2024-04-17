@@ -8,7 +8,8 @@ class User:
 
 class Users:
     def __init__(self):# ************** ask if we need this
-        pass
+        self.results= []
+        
     
     def add_user(self):
         name = input("Enter the user's name:")
@@ -62,6 +63,9 @@ class Users:
             query = "SELECT id, name FROM users"
             cursor.execute(query)
             results = cursor.fetchall()
+            self.results= results
+           
+            
             if results:
                 print("All users:")
                 for user in results:
