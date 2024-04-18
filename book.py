@@ -17,6 +17,7 @@ class Book:
 class Library:
     def __init__(self):
         self.books =[]
+        self.results= []
 
     def add_book(self):    
     
@@ -95,22 +96,35 @@ class Library:
  
          
     def return_book(self):
-        isbn = input("Enter the ISBN of the book you are returning: \n")
-        book_found = False
- 
-        for book in self.books:
-            if book.isbn == isbn:
-                book_found = True
-                if not book.available:
-                        book.available = True
-                        print(f"Thank you for returning '{book.title}'.")
-                        break
-                else:
-                    print(f"The book '{book.title}' was not borrowed.")
-                break
-        if not book_found:
-                    print("No book with that ISBN is found in our library.")
+        try:
+            # connecting to dc
+            conn = connect_db()
+            cursor = conn.cursor()
+            isbn = input("Enter the ISBN of the book you are returning: \n")
+            query = "SELECT availability FROM borrowed_books WHERE isbn =%s"
 
+            cursor.execute(query, isbn )
+            result = cursor.fetchone()
+ 
+            if result:
+                 if result == False:
+                      query = "UPDATE books SET availability = true WHERE isbn = %s"
+                      print(f"Thank you for returning '{book.title}'.")
+                       
+                 else:
+                    print(f"The book '{book.title}' was not borrowed.")
+                
+            else:
+                    print("No book with that ISBN is found in our library.")
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
+
+        finally:
+        # close out the connection
+            if conn.is_connected():
+                cursor.close()
+                conn.close()
+            print("MySql connection closed")
        
             
 
@@ -120,34 +134,54 @@ class Library:
             conn = connect_db()
             cursor = conn.cursor()
             query ="SELECT title, author, genre, year_published, availability FROM books WHERE isbn =%s"
-            cursor.execute(query)
-
-    
-
-        
-        
-        while True:
-            book_found = False
-            
-
-            for book in self.books:
-                if book.isbn == isbn:
+            cursor.execute(query,(isbn))
+            result = cursor.fetchone()
+            if result:
                     status = "available" if book.available else "currently borrowed"
                     print(f"Book: '{book.title}' by: {book.author} {book.year} is {status} ")
-                    book_found = True
-                    break
-            if not book_found:
-                    print("Book not found! ")
+                    
+            else:
+                print("Book not found! ")
+
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
+
+        finally:
+        # close out the connection
+            if conn.is_connected():
+                cursor.close()
+                conn.close()
+            print("MySql connection closed")
 
     def display_all_books(self):
-        if not self.books:
-            print("There's currently no books in the library. ")
-            return
-        else:
-            print("All Library Books: \n")
+        try:
+            conn = connect_db()
+            cursor = conn.cursor()
+            query = "SELECT * FROM books"
+            cursor.execute(query)
+            results = cursor.fetchall()
+            self.results= results
+
+            if results:
+                print("All Library Books: \n")
             for book in self.books:
                 status = "available" if book.available else "currently borrowed"
                 print(f"Book: '{book.title}' by: {book.author} - Status: {status} ")
+        
+            else:
+                print("There's currently no books in the library. ")
+
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
+
+        finally:
+        # close out the connection
+            if conn.is_connected():
+                cursor.close()
+                conn.close()
+            print("MySql connection closed")
+     
+            
              
 
 def book_operations():

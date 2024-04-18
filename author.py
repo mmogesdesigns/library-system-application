@@ -11,6 +11,7 @@ class Authors:
     def __init__(self):
         self.authors ={}
         self.next_id = 1
+        self.results=[]
 
     def add_author(self):
         name = input("Enter the author's name:")
@@ -64,6 +65,7 @@ class Authors:
             query = "SELECT * FROM authors"
             cursor.execute(query)
             results = cursor.fetchall()
+            self.results = results
             if results:
                 print("All authors:")
                 for author in results:
